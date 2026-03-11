@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model RateSource {
+  id          String      @id @default(cuid())
+  code        String      @unique
+  name        String
+  description String?
+  meta        Json?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  rateTypes   RateType[]
+}
+
+model RateType {
+  id        String       @id @default(cuid())
+  source    RateSource   @relation(fields: [sourceId], references: [id])
+  sourceId  String
+  code      String
+  name      String
+  meta      Json?
+  symbols   RateSymbol[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([sourceId, code])
+}
+
+model RateSymbol {
+  id            String         @id @default(cuid())
+  rateType      RateType       @relation(fields: [rateTypeId], references: [id])
+  rateTypeId    String
+  baseCurrency  String
+  quoteCurrency String
+  lastValue     Decimal?
+  lastUpdatedAt DateTime?
+  snapshots     RateSnapshot[]
+
+  @@unique([rateTypeId, baseCurrency, quoteCurrency])
+}
+
+model RateSnapshot {
+  id        String     @id @default(cuid())
+  symbol    RateSymbol @relation(fields: [symbolId], references: [id])
+  symbolId  String
+  value     Decimal
+  at        DateTime   @default(now())
+  raw       Json?
+}
+

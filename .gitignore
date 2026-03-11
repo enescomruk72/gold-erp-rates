@@ -1,0 +1,68 @@
+# Dependencies
+.npm
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+pnpm-error.log*
+bun-debug.log*
+bun-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test.local
+.env.production
+.env.production.local
+.env.*
+
+# Build
+dist/
+build/
+data_storage/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+.AppleDouble
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Prisma
+prisma/migrations/
+
+# Testing
+**/coverage/
+**/test/
+**/*.test.ts
+**/*.spec.ts
+.jest
+
+# Documentation
+docs/
+
+# Temproary files
+tmp/
+temp/
