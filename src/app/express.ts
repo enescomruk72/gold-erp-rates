@@ -1,12 +1,16 @@
 import express, { type Application } from 'express';
 import helmet from 'helmet';
 import compression from 'compression';
+import { createBullBoard } from '@bull-board/api';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
+import { ExpressAdapter } from '@bull-board/express';
 
 import { env } from '../config/env.config';
 import { Logger } from '../shared/infra/logger';
 import { apiTokenMiddleware } from '../infra/http/middleware/api-token.middleware';
 import { ratesRouter } from '../modules/rates/rates.routes';
 import { globalErrorHandler } from '../infra/http/middleware/error.middleware';
+import { rateSyncQueue } from '@/jobs/rate-sync.queue';
 
 export const createExpressApp = (): Application => {
   const app = express();
@@ -33,6 +37,17 @@ export const createExpressApp = (): Application => {
       service: 'gold-erp-rate-service',
     });
   });
+
+  // BullMQ UI (token gerektirmez, internal kullanım)
+  const bullBoardAdapter = new ExpressAdapter();
+  bullBoardAdapter.setBasePath('/bullmq');
+
+  createBullBoard({
+    queues: [new BullMQAdapter(rateSyncQueue)],
+    serverAdapter: bullBoardAdapter,
+  });
+
+  app.use('/bullmq', bullBoardAdapter.getRouter());
 
   // Aşağıdaki tüm route'lar x-api-token ister
   app.use(apiTokenMiddleware);

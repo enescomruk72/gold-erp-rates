@@ -34,6 +34,8 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.5.0",
+    "@bull-board/api": "^6.7.4",
+    "@bull-board/express": "^6.7.4",
     "bullmq": "^5.70.4",
     "compression": "^1.8.1",
     "cors": "^2.8.5",

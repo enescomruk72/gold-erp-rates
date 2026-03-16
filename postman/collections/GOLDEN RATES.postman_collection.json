@@ -1,0 +1,98 @@
+{
+  "info": {
+    "_postman_id": "a5054863-b1b2-42c3-9577-167243bbfdf4",
+    "name": "GOLDEN RATES",
+    "description": "## GOLDEN RATES – Servis Dokümantasyonu\n\nBu koleksiyon, **GOLDEN RATES** servisinin döviz/emtia fiyatlarını (kurlar) listeleme ve fiyat verisini arka planda senkronize etme uçlarını içerir.\n\n### Base URL\n\n- `http://localhost:4010`\n    \n\n> Not: URL yerel geliştirme ortamını (localhost) göstermektedir. Ortamlar arasında taşımak için `{{base_url}}` gibi bir environment/collection değişkeni kullanmanız önerilir. \n  \n\n### Kimlik Doğrulama\n\n- Bazı uçlar `x-api-token` header’ı ile korunur.\n    \n- Header örneği:\n    \n    - `x-api-token:`\n        \n\n### Ana Uçlar (Endpoints)\n\n- **GET** `/rates` – İstenen kod(lar)a göre güncel kur/fiyat listesini döner.\n    \n- **POST** `/rates/sync` – Kur/fiyat senkronizasyon işini kuyruğa alır (async).\n    \n\n### Genel Yanıt Formatı\n\nBaşarılı yanıtlar tipik olarak aşağıdaki alanları içerir:\n\n- `success` (boolean)\n    \n- `message` (string)\n    \n- `data` (object)\n    \n- `statusCode` (number)\n    \n- `type` (string)\n    \n- `timestamp` (string)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "RATES",
+      "id": "a5d2c4de-6b70-43c7-afb4-2a3b36d6aa72",
+      "request": {
+        "auth": {
+          "type": "apikey",
+          "apikey": [
+            {
+              "key": "value",
+              "value": "{{x-api-token}}",
+              "type": "string"
+            },
+            {
+              "key": "key",
+              "value": "x-api-token",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/rates?code=USDTRY,ALTIN, EURTRY,ONS,USDKG,EURKG,AYAR22",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "rates"
+          ],
+          "query": [
+            {
+              "key": "code",
+              "value": "USDTRY,ALTIN, EURTRY,ONS,USDKG,EURKG,AYAR22",
+              "description": "Değerler:\n\n\nUSDTRY, ALTIN, OMRUSD, USDPURE, EURTRY, ONS, AEDUSD, EURUSD, USDKG, KWDUSD, EURKG, GBPTRY, JODTRY, AYAR22, CHFTRY, USDILS, AUDTRY, USDMAD, KULCEALTIN, CADTRY, OMRTRY, XAUXAG, CEYREK_YENI, SARTRY, USDQAR, CEYREK_ESKI, JODUSD, USDCHF, YARIM_YENI, JPYTRY, YARIM_ESKI, KWDTRY, AUDUSD, TEK_YENI, SEKTRY, TEK_ESKI, ILSTRY, DKKTRY, USDCAD, ATA_YENI, NOKTRY, ATA_ESKI, MADTRY, USDSAR, ATA5_YENI, USDJPY, ATA5_ESKI, GBPUSD, GREMESE_YENI, GREMESE_ESKI, AYAR14, GUMUSTRY, XAGUSD, GUMUSUSD, XPTUSD, XPDUSD, PLATIN, PALADYUM",
+              "uuid": "5c98e274-44ce-43fb-8fd5-71d8eca993ef"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "RATES SYNC",
+      "id": "a0db7827-4d0c-49eb-ac53-39003e489d0a",
+      "request": {
+        "auth": {
+          "type": "apikey",
+          "apikey": [
+            {
+              "key": "value",
+              "value": "rRnrcl7IbLpWJAWNIlCiSFUqbbwUtjnZOK89Kpm09r0=",
+              "type": "string"
+            },
+            {
+              "key": "key",
+              "value": "x-api-token",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/rates/sync",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "rates",
+            "sync"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "id": "da5974e6-bbcc-47ac-89c9-e3016dea2781",
+      "key": "base_url",
+      "value": "https://rates.bkns-software.com"
+    },
+    {
+      "id": "a9bfd243-e64e-4e2e-a32c-bc600eb99a67",
+      "key": "x-api-token",
+      "value": "rRnrcl7IbLpWJAWNIlCiSFUqbbwUtjnZOK89Kpm09r0=",
+      "type": "default"
+    }
+  ]
+}
