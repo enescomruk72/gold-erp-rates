@@ -1,8 +1,8 @@
 import { io } from 'socket.io-client';
 import { Logger } from '@/shared/infra/logger';
 import { env } from '@/config/env.config';
-import { rateSyncQueue } from '@/jobs/rate-sync.queue';
 import { hasValidMandatoryPayload, type SocketPriceChangedPayload } from '@/modules/rates/rates.service';
+import { notifyValidPricePayload } from './price-payload-buffer';
 
 let socket: ReturnType<typeof io> | null = null;
 
@@ -52,13 +52,14 @@ export function startPriceSocketClient(): void {
       return;
     }
     if (!hasValidMandatoryPayload(raw)) {
-      Logger.debug('price_changed event missing mandatory symbols (USDTRY,EURTRY,ALTIN,ONS), skipping enqueue');
+      Logger.debug(
+        'price_changed event missing mandatory symbols (USDTRY,EURTRY,ALTIN,ONS), skipping notify',
+      );
       return;
     }
-    Logger.info('📥 price_changed event received → enqueuing sync job');
-    rateSyncQueue
-      .add('rate-sync-event', { reason: 'EVENT', payload: raw as SocketPriceChangedPayload })
-      .catch((err) => Logger.error('Failed to enqueue rate-sync job', err));
+    const typedPayload = raw as SocketPriceChangedPayload;
+    Logger.info('📥 price_changed event received → notifying waiting sync jobs');
+    notifyValidPricePayload(typedPayload);
   });
 }
 

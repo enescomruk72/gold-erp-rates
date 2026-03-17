@@ -17,7 +17,9 @@ export const env = {
   databaseUrl: process.env.DATABASE_URL ?? '',
   redisUrl: process.env.REDIS_URL ?? 'redis://localhost:6379',
   rateSyncIntervalMs: Number(process.env.RATE_SYNC_INTERVAL_MS ?? 10000),
+  rateSyncWaitTimeoutMs: Number(process.env.RATE_SYNC_WAIT_TIMEOUT_MS ?? 60000),
   priceSocketUrl: process.env.PRICE_SOCKET_URL ?? '',
   priceSocketEventName: process.env.PRICE_SOCKET_EVENT_NAME ?? 'price_changed',
 };
 
+console.log(env);

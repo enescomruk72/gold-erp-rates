@@ -18,8 +18,8 @@ export const rateSyncQueue = new Queue<RateSyncJobPayload>('rate-sync', {
       type: 'exponential',
       delay: 1000,
     },
-    removeOnComplete: true,
-    removeOnFail: 100,
+    removeOnComplete: 1000,
+    removeOnFail: 1000,
   },
 });
 

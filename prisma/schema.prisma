@@ -51,5 +51,7 @@ model RateSnapshot {
   value     Decimal
   at        DateTime   @default(now())
   raw       Json?
+
+  @@unique([symbolId])
 }
 

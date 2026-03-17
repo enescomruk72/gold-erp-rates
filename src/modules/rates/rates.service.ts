@@ -27,14 +27,16 @@ function parseCodeToPair(code: string): { baseCurrency: string; quoteCurrency: s
   return { baseCurrency: code, quoteCurrency: 'N/A' };
 }
 
-/** "11-03-2026 21:45:32" (TR) -> Date (UTC'ye çevrilir) */
+/** "11-03-2026 21:45:32" (TR) -> Date (saat bilgisi Istanbul ile aynı kalır) */
 function parseTarih(tarih: string): Date {
   if (!tarih || !tarih.trim()) return new Date();
   const [datePart, timePart] = tarih.trim().split(/\s+/);
   if (!datePart || !timePart) return new Date();
   const [d, m, y] = datePart.split('-');
   if (!d || !m || !y) return new Date();
-  const iso = `${y}-${m}-${d}T${timePart}+03:00`;
+  // Tarihi UTC gibi işleyip (Z), veritabanındaki "at" kolonunda
+  // ham tarih stringindeki saat ile aynı saatin görünmesini sağlarız.
+  const iso = `${y}-${m}-${d}T${timePart}Z`;
   const date = new Date(iso);
   return Number.isNaN(date.getTime()) ? new Date() : date;
 }
@@ -85,8 +87,16 @@ export function hasValidMandatoryPayload(raw: unknown): boolean {
   }
 }
 
-/** Socket'ten gelen payload'u DB'ye yazar (RateSymbol + RateSnapshot günceller) */
-export async function syncRatesFromSocketPayload(payload: SocketPriceChangedPayload | unknown): Promise<{ updated: number }> {
+type SyncRatesOptions = {
+  writeSnapshots?: boolean;
+  snapshotReason?: 'SCHEDULED' | 'MANUAL' | 'EVENT';
+};
+
+/** Socket'ten gelen payload'u DB'ye yazar (RateSymbol günceller, isteğe bağlı RateSnapshot günceller) */
+export async function syncRatesFromSocketPayload(
+  payload: SocketPriceChangedPayload | unknown,
+  options?: SyncRatesOptions,
+): Promise<{ updated: number }> {
   const normalized = normalizePayload(payload);
 
   const missingOrInvalidMandatory: string[] = [];
@@ -138,6 +148,9 @@ export async function syncRatesFromSocketPayload(payload: SocketPriceChangedPayl
     },
   });
 
+  const writeSnapshots = options?.writeSnapshots ?? false;
+  const snapshotReason = options?.snapshotReason ?? 'SCHEDULED';
+
   let updated = 0;
   for (const [code, value] of Object.entries(normalized.data)) {
     const numSatis = Number(value.satis);
@@ -166,13 +179,31 @@ export async function syncRatesFromSocketPayload(payload: SocketPriceChangedPayl
       },
     });
 
-    await prisma.rateSnapshot.create({
-      data: {
-        symbolId: symbol.id,
-        value: valueToUse,
-        raw: value as object,
-      },
-    });
+    if (writeSnapshots) {
+      await prisma.rateSnapshot.upsert({
+        where: { symbolId: symbol.id },
+        update: {
+          value: valueToUse,
+          at,
+          raw: {
+            ...((value as object) ?? {}),
+            source: 'socket',
+            reason: snapshotReason,
+          } as object,
+        },
+        create: {
+          symbolId: symbol.id,
+          value: valueToUse,
+          at,
+          raw: {
+            ...((value as object) ?? {}),
+            source: 'socket',
+            reason: snapshotReason,
+          } as object,
+        },
+      });
+    }
+
     updated += 1;
   }
   return { updated };
