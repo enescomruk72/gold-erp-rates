@@ -8,8 +8,7 @@ module.exports = {
     {
       name: "gold-erp-rate-api",
 
-      cwd: "/home/bkns-software-api/htdocs/rate.bkns-software.com/app",
-
+      cwd: "/home/bkns-software-rates/htdocs/rates.bkns-software.com/app",
       script: "dist/app/api.js",
 
       exec_mode: "fork",
@@ -39,7 +38,7 @@ module.exports = {
     {
       name: "gold-erp-rate-worker",
 
-      cwd: "/home/bkns-software-api/htdocs/rate.bkns-software.com/app",
+      cwd: "/home/bkns-software-rates/htdocs/rates.bkns-software.com/app",
 
       script: "dist/app/worker.js",
 
