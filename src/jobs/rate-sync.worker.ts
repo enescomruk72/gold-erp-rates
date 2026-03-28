@@ -3,12 +3,17 @@ import { Logger } from '@/shared/infra/logger';
 import { env } from '@/config/env.config';
 import { syncRatesFromSocketPayload } from '@/modules/rates/rates.service';
 import { waitForValidPricePayload } from '@/socket/price-payload-buffer';
+import { restartPriceSocketClientForSync } from '@/socket/price-socket.client';
 import type { RateSyncJobPayload } from './rate-sync.queue';
 
 export const rateSyncWorker = new Worker<RateSyncJobPayload>(
   'rate-sync',
   async (job: Job<RateSyncJobPayload>) => {
     Logger.info(`🔁 [RateSyncWorker] Processing job ${job.id}`, { reason: job.data.reason });
+
+    if (job.data.reason === 'SCHEDULED' || job.data.reason === 'MANUAL') {
+      await restartPriceSocketClientForSync();
+    }
 
     const timeoutMs = env.rateSyncWaitTimeoutMs;
     const payload = await waitForValidPricePayload(timeoutMs);

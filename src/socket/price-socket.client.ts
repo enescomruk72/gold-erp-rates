@@ -1,40 +1,35 @@
-import { io } from 'socket.io-client';
+import { io, type Socket } from 'socket.io-client';
 import { Logger } from '@/shared/infra/logger';
 import { env } from '@/config/env.config';
 import { hasValidMandatoryPayload, type SocketPriceChangedPayload } from '@/modules/rates/rates.service';
 import { notifyValidPricePayload } from './price-payload-buffer';
 
-let socket: ReturnType<typeof io> | null = null;
+let socket: Socket | null = null;
 
-export function startPriceSocketClient(): void {
-  if (!env.priceSocketUrl) {
-    Logger.info('⏭  PRICE_SOCKET_URL not set, skipping socket client');
-    return;
-  }
-
-  Logger.info(`🔌 Connecting to price socket: ${env.priceSocketUrl}`);
-
-  socket = io(env.priceSocketUrl, {
-    transports: ['websocket', 'polling'],
+function createSocketOptions() {
+  return {
+    transports: ['websocket', 'polling'] as ('websocket' | 'polling')[],
     reconnection: true,
     reconnectionAttempts: Infinity,
     reconnectionDelay: 1000,
     reconnectionDelayMax: 10000,
-  });
+  };
+}
 
-  socket.on('connect', () => {
+function bindPriceSocketHandlers(s: Socket): void {
+  s.on('connect', () => {
     Logger.info('✅ Price socket connected');
   });
 
-  socket.on('disconnect', (reason) => {
+  s.on('disconnect', (reason) => {
     Logger.warn('Price socket disconnected', { reason });
   });
 
-  socket.on('connect_error', (err) => {
+  s.on('connect_error', (err) => {
     Logger.error('Price socket connection error', err);
   });
 
-  socket.on(env.priceSocketEventName, (payload: unknown) => {
+  s.on(env.priceSocketEventName, (payload: unknown) => {
     // Socket bazen [ "price_changed", { meta, data } ] şeklinde tek argüman yollar; gerçek payload 2. eleman
     const raw =
       Array.isArray(payload) && payload.length >= 2 && payload[1] && typeof payload[1] === 'object'
@@ -60,6 +55,67 @@ export function startPriceSocketClient(): void {
     const typedPayload = raw as SocketPriceChangedPayload;
     Logger.info('📥 price_changed event received → notifying waiting sync jobs');
     notifyValidPricePayload(typedPayload);
+  });
+}
+
+function createAndBindPriceSocket(): Socket {
+  const s = io(env.priceSocketUrl!, createSocketOptions());
+  bindPriceSocketHandlers(s);
+  return s;
+}
+
+export function startPriceSocketClient(): void {
+  if (!env.priceSocketUrl) {
+    Logger.info('⏭  PRICE_SOCKET_URL not set, skipping socket client');
+    return;
+  }
+
+  Logger.info(`🔌 Connecting to price socket: ${env.priceSocketUrl}`);
+  socket = createAndBindPriceSocket();
+}
+
+/**
+ * Mevcut bağlantıyı kapatıp yeni socket açar; interval/manuel sync öncesi bayat oturumdan kaçınmak için.
+ * İlk `connect` olayına kadar bekler (timeout: env.rateSyncSocketReconnectTimeoutMs).
+ */
+export async function restartPriceSocketClientForSync(): Promise<void> {
+  if (!env.priceSocketUrl) return;
+
+  stopPriceSocketClient();
+  Logger.info('🔌 Price socket full reconnect before rate sync...');
+
+  await new Promise<void>((resolve, reject) => {
+    socket = createAndBindPriceSocket();
+    const s = socket;
+    const timeoutMs = env.rateSyncSocketReconnectTimeoutMs;
+
+    const timer = setTimeout(() => {
+      s.off('connect', onConnect);
+      s.off('connect_error', onError);
+      reject(new Error(`Price socket reconnect timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+
+    const onConnect = () => {
+      clearTimeout(timer);
+      s.off('connect_error', onError);
+      Logger.info('✅ Price socket fresh session ready');
+      resolve();
+    };
+
+    const onError = (err: Error) => {
+      clearTimeout(timer);
+      s.off('connect', onConnect);
+      reject(err);
+    };
+
+    if (s.connected) {
+      clearTimeout(timer);
+      resolve();
+      return;
+    }
+
+    s.once('connect', onConnect);
+    s.once('connect_error', onError);
   });
 }
 

@@ -18,6 +18,8 @@ export const env = {
   redisUrl: process.env.REDIS_URL ?? 'redis://localhost:6379',
   rateSyncIntervalMs: Number(process.env.RATE_SYNC_INTERVAL_MS ?? 10000),
   rateSyncWaitTimeoutMs: Number(process.env.RATE_SYNC_WAIT_TIMEOUT_MS ?? 60000),
+  /** SCHEDULED/MANUAL rate sync öncesi socket tam reconnect bekleme süresi (ms) */
+  rateSyncSocketReconnectTimeoutMs: Number(process.env.RATE_SYNC_SOCKET_RECONNECT_TIMEOUT_MS ?? 15000),
   priceSocketUrl: process.env.PRICE_SOCKET_URL ?? '',
   priceSocketEventName: process.env.PRICE_SOCKET_EVENT_NAME ?? 'price_changed',
 };
